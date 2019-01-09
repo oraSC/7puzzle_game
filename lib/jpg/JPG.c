@@ -13,6 +13,7 @@ pJpgInfo_t decompress_jpg2buffer(pJpgInfo_t pdst_jpginfo, char *src_path)
 
 	if(src_file == NULL)
 	{
+		perror("fail to open jpg file");
 		return NULL;
 	}
 	//创建、初始化解码对象，错误处理
@@ -42,8 +43,7 @@ pJpgInfo_t decompress_jpg2buffer(pJpgInfo_t pdst_jpginfo, char *src_path)
 	pdst_jpginfo->height  = cinfo.output_height;
 	pdst_jpginfo->rowsize = cinfo.output_width * cinfo.output_components;
 	pdst_jpginfo->bicount = cinfo.output_components * 8;
-	pdst_jpginfo->buff    = malloc(pdst_jpginfo->rowsize * pdst_jpginfo->height);
-
+	pdst_jpginfo->buff    = (unsigned char  *)malloc(pdst_jpginfo->rowsize * pdst_jpginfo->height);
 
 	unsigned char *src_buff = malloc(pdst_jpginfo->rowsize);
 	unsigned char *row_buff = pdst_jpginfo->buff;
@@ -94,6 +94,7 @@ bool decompress_jpg2bmp(char *src_path, char *dst_path)
 
 	if(src_file == NULL)
 	{
+		perror("fail to open jpg file");
 		return -1;
 	}
 	//创建、初始化解码对象，错误处理
@@ -139,6 +140,11 @@ bool decompress_jpg2bmp(char *src_path, char *dst_path)
 
 	//写入bmp头
 	FILE *dst_file = fopen(dst_path, "w");
+	if(dst_file == NULL)
+	{
+		perror("fail to open bmp file");
+		return -1;
+	}
 
 	fwrite(pbmp_head, 54, 1, dst_file);
 
@@ -169,7 +175,7 @@ bool decompress_jpg2bmp(char *src_path, char *dst_path)
 		
 		fseek(dst_file, pos, SEEK_END);
 		fwrite(dst_buff, rowsize, 1, dst_file);
-	
+
 	}
 
 	free(src_buff);
