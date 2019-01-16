@@ -52,9 +52,39 @@ pLcdInfo_t lcd_create(const char *path, pLcdInfo_t plcdinfo)
 error:	
 	
 	//lcd_destroy(plcdinfo);
-	return 0;
+	return NULL;
 
 }
+
+bool draw_rect(pLcdInfo_t plcdinfo, int x, int y,pRect_t prect) 
+{
+	//错误处理
+	if(plcdinfo == NULL)
+	{
+		perror("plcdinfo is NULL");
+		return false;
+	}
+	unsigned int *base = plcdinfo->base + y * plcdinfo->width + x;
+	int LW = prect->linewidth;
+
+	for(int rows = 0; rows < prect->height; rows++)
+	{
+		for(int cols = 0; cols < prect->width; cols++)
+		{
+			if(LW == -1 || rows < LW || cols < LW || prect->width - rows <= LW || prect->height - cols <= LW)
+			{
+				*(base + cols) = prect->color;
+			}
+		}
+		base += plcdinfo->width;
+	
+	}
+	return true;
+
+
+
+}
+
 
 
 bool draw_pic(pLcdInfo_t plcdinfo, int x, int y, pJpgInfo_t pjpginfo)
@@ -62,6 +92,7 @@ bool draw_pic(pLcdInfo_t plcdinfo, int x, int y, pJpgInfo_t pjpginfo)
 	unsigned int *base = plcdinfo->base + y * plcdinfo->width + x;
 	
 	//画图片
+	
 	
 	int min_W = (plcdinfo->width  - x) < pjpginfo->width  ? plcdinfo->width -  x : pjpginfo->width;
 	int min_H = (plcdinfo->height - y) < pjpginfo->height ? plcdinfo->height - y : pjpginfo->height;

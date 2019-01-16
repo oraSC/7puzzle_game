@@ -39,25 +39,24 @@ int main()
 		return -1;
 	}
 	
-	//进入游戏
-	while(!welcome(plcdinfo));
-	//printf("welcome\n");	
+	while(1)
+	{
+		//进入游戏
+		while(!welcome(plcdinfo));
+		//printf("welcome\n");	
 
-	//场景选择
-	pic_opt(plcdinfo);
-	
-
-
-
-	//开始拼图
-	/*pJpgInfo_t pgame_jpginfo = malloc(sizeof(JpgInfo_t));
-	decompress_jpg2buffer(pgame_jpginfo, "./pic/game1.jpg");
-	int grade;
-	scanf("%d", &grade);
-	
-	//enter_game(plcdinfo, pgame_jpginfo, grade);
-	*/
-	
+		//场景选择
+		Option_t option = opt(plcdinfo);
+		//printf("-0---%d----\n", option.difficulty);	
+		
+		//开始拼图
+		if(enter_game(plcdinfo, option))
+		{
+			congratulations(plcdinfo);
+		
+		}
+					
+	}		
 
 	/*
 	bug: 如何解决关闭线程中的打开文件

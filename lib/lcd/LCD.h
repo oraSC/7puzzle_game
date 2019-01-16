@@ -29,9 +29,17 @@ typedef struct BtnInfo{
 
 }BtnInfo_t, *pBtnInfo_t; 
 
+typedef struct{
+	int 		width;
+	int 		height;
+	unsigned int 	color;
+	int 		linewidth;//线宽，单位为px,定义为-1时填充整个矩形
+
+}Rect_t, *pRect_t;
 
 pLcdInfo_t 	lcd_create(const char *path, pLcdInfo_t plcdinfo);
 bool     	lcd_destroy(pLcdInfo_t plcdinfo);
+bool		draw_rect(pLcdInfo_t plcdinfo, int x, int y, pRect_t rect);
 bool		draw_pic(pLcdInfo_t plcdinfo, int x, int y, pJpgInfo_t pjpginfo);
 pBtnInfo_t	draw_btn(pLcdInfo_t plcdinfo, int x, int y, pJpgInfo_t pjpginfo);
 bool		if_btnclick(pBtnInfo_t pbtninfo, int x, int y);

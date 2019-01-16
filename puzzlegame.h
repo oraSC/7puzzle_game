@@ -14,14 +14,18 @@ typedef struct {
 	bool update;
 }Point_t;
 
+typedef struct {
+	int game;
+	int difficulty;
+
+}Option_t;
 
 
 //界面开启
-bool 	welcome(pLcdInfo_t plcdinfo);
-int 	pic_opt(pLcdInfo_t plcdinfo);
-int 	grade_opt();
-bool 	enter_game(pLcdInfo_t plcdinfo, pJpgInfo_t pjpginfo, int grade);
-
+bool 		welcome(pLcdInfo_t plcdinfo);
+Option_t 	opt(pLcdInfo_t plcdinfo);
+bool 		enter_game(pLcdInfo_t plcdinfo, Option_t option);
+void		congratulations(pLcdInfo_t plcdinfo);
 
 
 
