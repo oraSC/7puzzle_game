@@ -29,6 +29,7 @@ int main()
 	lcd_create("/dev/fb0", plcdinfo);
 	//decompress_jpg2bmp("pic.jpg", "1.bmp");
 
+	printf("main fd:%d,main base address:%p\n", plcdinfo->fd, plcdinfo->base);
 	//创建触摸屏监控子线程
 	pthread_t ts_pthid;
 	
@@ -52,10 +53,15 @@ int main()
 		//开始拼图
 		if(enter_game(plcdinfo, option))
 		{
-			congratulations(plcdinfo);
+			//成功
+			succeed_or_die(plcdinfo, true);
 		
 		}
-					
+		else
+		{
+			succeed_or_die(plcdinfo, false);
+		
+		}
 	}		
 
 	/*

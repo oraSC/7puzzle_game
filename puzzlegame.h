@@ -20,12 +20,21 @@ typedef struct {
 
 }Option_t;
 
+typedef struct{
+	int time;
+	bool timeout;
+	bool succeed;
+
+}CountdownInfo_t, *pCountdownInfo_t;
+
+
 
 //界面开启
 bool 		welcome(pLcdInfo_t plcdinfo);
 Option_t 	opt(pLcdInfo_t plcdinfo);
 bool 		enter_game(pLcdInfo_t plcdinfo, Option_t option);
-void		congratulations(pLcdInfo_t plcdinfo);
+void 		*CD_pthfun(void *argv);
+void		succeed_or_die(pLcdInfo_t plcdinfo, bool succeed);
 
 
 

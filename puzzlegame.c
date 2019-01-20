@@ -2,7 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <unistd.h>
+#include <pthread.h>
 
 #define POS_X 200
 #define POS_Y 40
@@ -243,7 +244,7 @@ bool enter_game(pLcdInfo_t plcdinfo, Option_t option)
 	//读取背景、倒计时数字、场景和相关按键图片
 	pJpgInfo_t pbg_jpginfo = (JpgInfo_t *)malloc(sizeof(JpgInfo_t));
 	pJpgInfo_t pgame_jpginfo = (JpgInfo_t *)malloc(sizeof(JpgInfo_t));
-	JpgInfo_t  num_jpginfo[9];
+	JpgInfo_t  num_jpginfo[10];
 
 	if(pgame_jpginfo == NULL || pbg_jpginfo == NULL)
 	{
@@ -257,15 +258,17 @@ bool enter_game(pLcdInfo_t plcdinfo, Option_t option)
 		sprintf(num_path, "./pic/game/num%d.jpg", i);
 		decompress_jpg2buffer(&num_jpginfo[i], num_path);
 	}
-
+	/*
+	bug:117
+	*/
+	//printf("main:%d\n",num_jpginfo[1].width);
 
 
 	//printf("%s\n", path);
 	//背景
 	decompress_jpg2buffer(pbg_jpginfo, "./pic/game/bg.jpg");
 	draw_pic(plcdinfo, 0, 0, pbg_jpginfo);	
-
-
+	
 	//场景
 	unsigned char path[20] = {0};
 	sprintf(path, "./pic/game/%d.jpg", option.game);
@@ -290,10 +293,6 @@ bool enter_game(pLcdInfo_t plcdinfo, Option_t option)
 	
 	}
 	draw_pic(plcdinfo, POS_TIME_X+40, POS_TIME_Y, &num_jpginfo[0]);
-
-
-
-	
 
 	//拆分图片
 	pJpgInfo_t pdiv_jpginfo[COLS * ROWS];
@@ -337,7 +336,9 @@ bool enter_game(pLcdInfo_t plcdinfo, Option_t option)
 	*/
 	pBtnInfo_t pbtninfo[ROWS * COLS];
 
-	//开始拼图
+	
+
+	//打乱图片	
 	for(int rows = 0; rows < ROWS; rows++)
 	{
 		for(int cols = 0; cols  < COLS; cols++)
@@ -382,7 +383,21 @@ bool enter_game(pLcdInfo_t plcdinfo, Option_t option)
 		
 	}
 	printf("\n");
-	while(1)
+	//开始拼图
+	//创建倒计时子线程	
+	pthread_t CD_pthid;
+	CountdownInfo_t countdowninfo;
+	countdowninfo.time = 60;
+	countdowninfo.timeout = false;
+	countdowninfo.succeed = false;				
+	int ret = pthread_create(&CD_pthid, NULL, CD_pthfun, &countdowninfo);
+	if(ret < 0)
+	{
+		perror("fail to create countdown pthread");
+		return false;
+	}
+	
+	while(1 && countdowninfo.timeout == false)
 	{
 		//选取两张图片互换
 		if(ts_point.update)
@@ -450,6 +465,7 @@ bool enter_game(pLcdInfo_t plcdinfo, Option_t option)
 		}
 		if(!strcmp(rank, finish_rank))
 		{
+			countdowninfo.succeed = true;
 			break;
 		}
 
@@ -463,23 +479,77 @@ bool enter_game(pLcdInfo_t plcdinfo, Option_t option)
 	free(pgame_jpginfo->buff);
 	free(pgame_jpginfo);
 
-	
-	return true;	
-	
-
-
-
+	if(countdowninfo.succeed == true)
+		return true;	
+	else
+		return false;
 
 }
 
-void congratulations(pLcdInfo_t plcdinfo)
+void *CD_pthfun(void *argv)
+{
+	//打开lcd、数字图片
+	pLcdInfo_t plcdinfo = (LcdInfo_t *)malloc(sizeof(LcdInfo_t));
+	if(plcdinfo == NULL)
+	{
+		perror("fail to malloc lcdinfo in countdown pthread");
+		return;
+	}
+
+	lcd_create("/dev/fb0", plcdinfo);
+	
+	JpgInfo_t  num_jpginfo[10];
+	for(int i = 0; i < 10; i++)
+	{
+		unsigned char num_path[20] = {0};
+		sprintf(num_path, "./pic/game/num%d.jpg", i);
+		decompress_jpg2buffer(&num_jpginfo[i], num_path);
+	}
+	
+	//读取参数
+	pCountdownInfo_t pcountdowninfo = (CountdownInfo_t *)argv;
+	
+	//当游戏未完成(succeed != true)、时间未到(time != 0)
+	while(1 && pcountdowninfo->succeed == false && pcountdowninfo->time)
+	{
+		int timeH = pcountdowninfo->time/10%10;
+		int timeL = pcountdowninfo->time/1%10;
+	
+		draw_pic(plcdinfo, POS_TIME_X, POS_TIME_Y, &num_jpginfo[timeH]);
+		draw_pic(plcdinfo, POS_TIME_X + 40, POS_TIME_Y, &num_jpginfo[timeL]);
+		
+		sleep(1);
+		pcountdowninfo->time--;
+
+	}
+	//置位timeout标志位
+	pcountdowninfo->timeout = true;
+	
+	//释放线程内存
+	free(plcdinfo);
+	for(int i = 0; i < 10; i++)
+	{
+		free(num_jpginfo[i].buff);
+	}
+	printf("countdown pthread exit\n");
+
+}
+
+
+void succeed_or_die(pLcdInfo_t plcdinfo, bool succeed)
 {
 
 	sleep(1);
 
 	pJpgInfo_t pjpginfo = (JpgInfo_t *)malloc(sizeof(JpgInfo_t));
-	decompress_jpg2buffer(pjpginfo, "./pic/game/congratulations.jpg");
-
+	if(succeed == true)
+	{
+		decompress_jpg2buffer(pjpginfo, "./pic/game/congratulations.jpg");
+	}
+	else
+	{
+		decompress_jpg2buffer(pjpginfo, "./pic/game/fail.jpg");
+	}
 	
 
 	draw_pic(plcdinfo, 0, 0, pjpginfo);
